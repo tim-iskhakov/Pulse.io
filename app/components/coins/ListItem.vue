@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useSparklineChart } from '~/composables/coins/useChart'
+import { vHighlight } from '~/utils/highlight'
 
 const props = defineProps<{
   id: string
@@ -25,7 +26,7 @@ useSparklineChart({
 </script>
 
 <template>
-  <div class="sticky left-0 z-10 px-4 py-3 text-left">
+  <div class="sticky left-0 z-10 px-4 py-3 text-left bg-base">
     <div class="group flex min-w-[16rem] items-center gap-3">
       <div class="overflow-hidden rounded-full border border-base bg-elevated">
         <NuxtImg :src="image" :alt="name" width="28" height="28" />
@@ -41,10 +42,15 @@ useSparklineChart({
     </div>
   </div>
   <div class="px-4 py-3 flex items-center">
-    <AppFormattedValue :value="currentPrice" :precision="3" />
+    <AppFormattedValue
+      v-highlight="currentPrice"
+      :value="currentPrice"
+      :compact="false"
+      :precision="4"
+    />
   </div>
   <div class="px-4 py-3 flex items-center">
-    <AppFormattedValue :value="priceChange24h" :precision="2" color />
+    <AppFormattedValue :value="priceChange24h" :precision="3" color />
   </div>
   <div class="px-4 py-3 flex items-center">
     <AppFormattedValue :value="marketCap" />

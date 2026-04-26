@@ -16,7 +16,7 @@
   html,
   body,
   #__nuxt {
-    @apply min-h-screen bg-base text-main;
+    @apply min-h-screen overflow-hidden max-h-screen bg-base text-main;
   }
 
   body {

@@ -2,7 +2,7 @@
 const coinsStore = useCoinsStore()
 const { open, close } = useBinanceWebsocket()
 
-await coinsStore.fetchCoins()
+await useGetCoins()
 
 const headers = [
   'Coin',
@@ -24,14 +24,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="px-3 py-4 md:px-6">
-    <div class="max-h-[calc(100vh-10rem)] overflow-auto rounded-lg border border-base">
+  <div class="px-3 md:px-6">
+    <div class="max-h-[calc(100vh-10rem)] overflow-auto rounded-lg">
       <div class="grid min-w-full grid-cols-[190px_repeat(5,200px)_2fr] whitespace-nowrap">
-        <div class="sticky top-0 z-20 col-span-full grid grid-cols-subgrid border-b border-base">
+        <div class="sticky top-0 z-20 col-span-full grid grid-cols-subgrid border-b border-soft">
           <div
             v-for="(header, index) in headers"
             :key="header"
-            class="px-4 py-3 text-left text-sm font-medium bg-base text-muted"
+            class="px-4 bg-base py-3 text-left text-sm font-medium text-muted"
             :class="index === 0 ? 'sticky left-0 z-30' : ''"
           >
             {{ header }}
@@ -42,7 +42,7 @@ onBeforeUnmount(() => {
           v-for="coin in coinsStore.items"
           :key="coin.id"
           :to="`/coins/${coin.id}`"
-          class="row col-span-full grid grid-cols-subgrid border-b border-base transition-colors"
+          class="row col-span-full grid grid-cols-subgrid border-b border-soft transition-colors"
         >
           <CoinsListItem
             :id="coin.id"

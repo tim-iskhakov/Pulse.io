@@ -1,13 +1,8 @@
 export const useCoinsStore = defineStore('coins', () => {
   const items = ref<CoinMarket[]>([])
 
-  const fetchCoins = async () => {
-    const { data } = await useFetch<CoinMarket[]>('/api/coins', {
-      query: {
-        sparkline: true
-      }
-    })
-    items.value = data.value || []
+  const setItems = (newItems: CoinMarket[]) => {
+    items.value = newItems
   }
 
   const updateItems = (updatedItems: { symbol: string; price: string }[]) => {
@@ -21,5 +16,5 @@ export const useCoinsStore = defineStore('coins', () => {
     }
   }
 
-  return { items, fetchCoins, updateItems }
+  return { items, setItems, updateItems }
 })
