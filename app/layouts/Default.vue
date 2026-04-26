@@ -1,6 +1,8 @@
 <template>
-  <div>
+  <div class="min-h-screen bg-base text-text">
     <AppHeader />
-    <slot />
+    <div class="max-w-screen-2xl mx-auto">
+      <slot />
+    </div>
   </div>
 </template>

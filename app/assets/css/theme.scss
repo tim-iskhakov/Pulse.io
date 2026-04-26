@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-base: #0d0f14;
+    --color-surface: #13151b;
+    --color-elevated: #171a22;
+    --color-border: rgb(255 255 255 / 0.1);
+    --color-soft: rgb(255 255 255 / 0.05);
+    --color-muted: rgb(255 255 255 / 0.55);
+    --color-hover: rgb(255 255 255 / 0.04);
+  }
+
+  html,
+  body,
+  #__nuxt {
+    @apply min-h-screen bg-base text-main;
+  }
+
+  body {
+    @apply antialiased;
+  }
+}

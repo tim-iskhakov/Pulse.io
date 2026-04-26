@@ -79,13 +79,13 @@ const getTopCoins = defineCachedFunction(
     name: 'topCoins',
     maxAge: 30,
     getKey: (query: CoinsQuery) =>
-      `${query.vs_currency}:${query.order}:${query.per_page}:${query.sparkline}:${query.page || ''}:${query.price_change_percentage || ''}:${query.precision || ''}`
+      `${query.vs_currency}:${query.order}:${query.per_page}:${query.sparkline}:${query.page || ''}:${query.price_change_percentage || '7d'}:${query.precision || ''}`
   }
 )
 
 export default defineEventHandler(async (event) => {
   const q = getQuery(event)
-  const parsedPriceChangePercentage = String(q.price_change_percentage || '')
+  const parsedPriceChangePercentage = String(q.price_change_percentage || '7d')
   const parsedPrecision = String(q.precision || '2')
 
   const query: CoinsQuery = {
