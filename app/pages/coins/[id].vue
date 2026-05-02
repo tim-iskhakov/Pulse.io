@@ -30,22 +30,22 @@ watch(coinId, () => {
   chartHistoryBackoffUntil.value = 0
 })
 
+const coinAsyncKey = computed(() => `coin:${coinId.value}`)
+const chartAsyncKey = computed(() => `coin-chart:${coinId.value}`)
+
 const { data: coin } = await useAsyncData<CoinDetailsResponse | null>(
-  () => `coin:${coinId.value}`,
+  coinAsyncKey,
   async () => {
     if (!coinId.value) {
       return null
     }
 
     return await $fetch<CoinDetailsResponse>(`/api/coins/${coinId.value}`)
-  },
-  {
-    watch: [coinId]
   }
 )
 
 const { data: chart } = await useAsyncData<CoinChartResponse | null>(
-  () => `coin-chart:${coinId.value}`,
+  chartAsyncKey,
   async () => {
     if (!coinId.value) {
       return null
@@ -57,9 +57,6 @@ const { data: chart } = await useAsyncData<CoinChartResponse | null>(
         days: '7'
       }
     })
-  },
-  {
-    watch: [coinId]
   }
 )
 
