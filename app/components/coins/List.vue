@@ -1,8 +1,13 @@
 <script setup lang="ts">
+const pagination = inject('pagination') as {
+  page: Ref<number>
+  perPage: number
+}
+
 const coinsStore = useCoinsStore()
 const { open, close } = useBinanceWebsocket()
 
-await useGetCoins()
+await useGetCoins(pagination.page, pagination.perPage)
 
 const headers = [
   'Coin',
@@ -24,8 +29,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="px-3 md:px-6">
-    <div class="max-h-[calc(100vh-10rem)] overflow-auto rounded-lg">
+  <div class="w-full min-w-0 px-3 md:px-6">
+    <div
+      class="max-h-[calc(100vh-10rem)] w-full min-w-0 overflow-x-auto overflow-y-auto overscroll-x-contain rounded-lg"
+    >
       <div class="grid min-w-full grid-cols-[190px_repeat(5,200px)_2fr] whitespace-nowrap">
         <div class="sticky top-0 z-20 col-span-full grid grid-cols-subgrid border-b border-soft">
           <div

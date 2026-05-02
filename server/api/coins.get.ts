@@ -1,6 +1,7 @@
 import { getQuery } from 'h3'
 import type { CoinMarketRaw } from '#shared/types/coinsMarkets'
 import { coinsMapper } from '../utils/coinsMapper'
+import { throwUpstreamFetchError } from '../utils/upstreamFetchError'
 
 type CoinsQuery = {
   vs_currency: string
@@ -104,5 +105,9 @@ export default defineEventHandler(async (event) => {
     query.precision = parsedPrecision as Precision
   }
 
-  return await getTopCoins(query)
+  try {
+    return await getTopCoins(query)
+  } catch (error: unknown) {
+    throwUpstreamFetchError(error, 'Failed to fetch markets from CoinGecko')
+  }
 })

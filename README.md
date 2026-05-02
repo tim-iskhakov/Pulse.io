@@ -5,13 +5,19 @@ https://pulse--io.vercel.app/
 
 It renders the initial coins list on the server and then keeps prices fresh in real time via Binance WebSocket updates.
 
+There is also a **coin detail page** at `/coins/:id`: it loads full coin data from CoinGecko via `/api/coins/:id`, shows a price chart (Lightweight Charts) with history from `/api/coins/:id/chart` and optional older ranges from `/api/coins/:id/chart/range`, and displays key market metrics beside the chart on larger screens.
+
+> **Rate limits:** Market data is fetched through CoinGecko’s **public (free) API**. Without a paid plan or your own API key, you may hit **HTTP 429** (too many requests) when scrolling the chart, paginating the list, or refreshing often. This is expected on the free tier.
+
 ## Features
 
 - SSR-first coins loading through a Nuxt server API (`/api/coins`)
-- Cached upstream requests to CoinGecko (30s cache window)
+- Paginated home list with server-side CoinGecko `markets` queries
+- Coin detail route with chart + metrics (`/coins/:id`)
+- Cached upstream requests to CoinGecko (various cache windows per endpoint)
 - Real-time price updates from Binance mini ticker stream
 - Pinia store for client-side state updates
-- 7d sparkline chart per coin (Lightweight Charts)
+- Sparklines on the list and an interactive chart on the coin page (Lightweight Charts)
 - Tailwind-based UI with typed domain models
 
 ## Tech Stack
@@ -64,10 +70,11 @@ pnpm preview
 
 ## Data Flow
 
-1. `app/components/coins/List.vue` calls `useGetCoins()`.
+1. `app/components/coins/List.vue` calls `useGetCoins()` (pagination is provided by `AppPagination` via `inject('pagination')`).
 2. `app/composables/useGetCoins.ts` uses `useFetch('/api/coins')` and writes data into Pinia store.
 3. `server/api/coins.get.ts` fetches market data from CoinGecko and maps response fields.
 4. `app/composables/useBinanceWebSocket.ts` subscribes to Binance stream and patches only changed prices in store.
+5. The coin page (`app/pages/coins/[id].vue`) loads detail + chart series through `server/api/coins/[id].get.ts` and chart endpoints under `server/api/coins/[id]/chart*.ts`.
 
 ## Project Structure
 
@@ -86,5 +93,6 @@ shared/
 
 ## Notes
 
-- The app proxies third-party market data through `/api/coins` instead of calling CoinGecko directly from the client.
+- The app proxies third-party market data through Nitro routes instead of calling CoinGecko directly from the browser.
 - WebSocket updates are lightweight and update only `currentPrice` in store items.
+- CoinGecko free-tier rate limits can surface as errors or empty chart slices under load; see the warning above.

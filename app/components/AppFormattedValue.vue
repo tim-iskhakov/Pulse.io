@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    value: number
+    value: number | null
     percent?: boolean
     color?: boolean
     precision?: number
@@ -18,6 +18,10 @@ const props = withDefaults(
 )
 
 const formattedValue = computed(() => {
+  if (!props.value) {
+    return null
+  }
+
   const formatter = new Intl.NumberFormat('en-US', {
     notation: props.compact ? 'compact' : 'standard',
     compactDisplay: 'short',
@@ -36,6 +40,7 @@ const formattedValue = computed(() => {
 
 <template>
   <span
+    v-if="value"
     class="tabular-nums"
     :class="{
       'text-positive': color && Number(value.toFixed(2)) > 0,

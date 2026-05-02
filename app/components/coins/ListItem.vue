@@ -9,9 +9,9 @@ const props = defineProps<{
   image: string
   currentPrice: number
   marketCap: number
-  marketCapChange24h: number
+  marketCapChange24h: number | null
   totalVolume: number
-  priceChange24h: number
+  priceChange24h: number | null
   priceChangePercentage7d?: number
   sparklineIn7d?: { price: number[] }
 }>()
@@ -32,7 +32,9 @@ useSparklineChart({
         <NuxtImg :src="image" :alt="name" width="28" height="28" />
       </div>
       <div class="flex flex-col">
-        <div class="text-sm font-semibold text-main transition-colors group-hover:text-primary">
+        <div
+          class="text-sm font-semibold text-main transition-colors truncate max-w-[7rem] group-hover:text-primary"
+        >
           {{ name }}
         </div>
         <div class="text-subtle text-xs font-medium tracking-wide">
