@@ -2,6 +2,7 @@
 import type { CoinDetailsResponse } from '#shared/types/coinDetails'
 import type { UTCTimestamp } from 'lightweight-charts'
 import { useCoinChart } from '~/composables/coin/useChart'
+import { shouldApplyChartRangeMerge } from '~/utils/shouldApplyChartRangeMerge'
 
 type CoinChartResponse = {
   prices: [number, number][]
@@ -13,6 +14,8 @@ const chartContainer = ref<HTMLDivElement | null>(null)
 const chartPoints = ref<{ time: UTCTimestamp; value: number }[]>([])
 const isLoadingMoreChart = ref(false)
 const chartHistoryBackoffUntil = ref(0)
+/** Bumped when `coinId` changes so in-flight chart/range fetches cannot merge into the wrong coin's series. */
+let chartHistorySession = 0
 
 function getFetchErrorParts(e: unknown): { status?: number; retryAfterSeconds?: number } {
   if (typeof e !== 'object' || e === null) return {}
@@ -28,6 +31,7 @@ function getFetchErrorParts(e: unknown): { status?: number; retryAfterSeconds?: 
 
 watch(coinId, () => {
   chartHistoryBackoffUntil.value = 0
+  chartHistorySession++
 })
 
 const { data: coin } = await useAsyncData<CoinDetailsResponse | null>(
@@ -103,6 +107,8 @@ useCoinChart({
     if (Date.now() < chartHistoryBackoffUntil.value) return
     isLoadingMoreChart.value = true
 
+    const sessionAtStart = chartHistorySession
+
     try {
       const to = Math.floor(Number(oldestLoadedTime))
       const from = Math.max(to - 70 * 24 * 60 * 60, 0)
@@ -114,6 +120,10 @@ useCoinChart({
           to
         }
       })
+
+      if (!shouldApplyChartRangeMerge(sessionAtStart, chartHistorySession)) {
+        return
+      }
 
       const nextPoints =
         range.prices?.map(([timestampMs, value]) => ({
