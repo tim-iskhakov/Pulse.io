@@ -2,6 +2,7 @@
 import type { CoinDetailsResponse } from '#shared/types/coinDetails'
 import type { UTCTimestamp } from 'lightweight-charts'
 import { useCoinChart } from '~/composables/coin/useChart'
+import { shouldMergeChartRangeAfterFetch } from '~/utils/chartRangeMergeGuard'
 
 type CoinChartResponse = {
   prices: [number, number][]
@@ -101,19 +102,24 @@ useCoinChart({
   async onNeedMoreLeft(oldestLoadedTime) {
     if (!coinId.value || isLoadingMoreChart.value) return
     if (Date.now() < chartHistoryBackoffUntil.value) return
+    const rangeCoinId = coinId.value
     isLoadingMoreChart.value = true
 
     try {
       const to = Math.floor(Number(oldestLoadedTime))
       const from = Math.max(to - 70 * 24 * 60 * 60, 0)
 
-      const range = await $fetch<CoinChartResponse>(`/api/coins/${coinId.value}/chart/range`, {
+      const range = await $fetch<CoinChartResponse>(`/api/coins/${rangeCoinId}/chart/range`, {
         query: {
           vs_currency: 'usd',
           from,
           to
         }
       })
+
+      if (!shouldMergeChartRangeAfterFetch(rangeCoinId, coinId.value)) {
+        return
+      }
 
       const nextPoints =
         range.prices?.map(([timestampMs, value]) => ({
