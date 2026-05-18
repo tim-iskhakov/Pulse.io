@@ -1,3 +1,5 @@
+import { coinsListForStoreFromFetch } from '#shared/utils/coinsListForStore'
+
 export const useGetCoins = async (page: Ref<number>, perPage: number) => {
   const coinsStore = useCoinsStore()
 
@@ -18,16 +20,13 @@ export const useGetCoins = async (page: Ref<number>, perPage: number) => {
 
   const { data, status, pending, error, refresh, clear } = asyncData
 
-  if (Array.isArray(data.value)) {
-    coinsStore.setItems(data.value)
-  }
-
   watch(
     data,
     (newData) => {
-      if (Array.isArray(newData)) {
-        coinsStore.setItems(newData)
-      }
+      // On fetch error, Nuxt resets `data` to `default()` (null). If we only wrote when
+      // `data` was an array, the Pinia store would keep the previous page's rows while
+      // pagination already shows the new page — wrong coins with no successful response.
+      coinsStore.setItems(coinsListForStoreFromFetch(newData))
     },
     { immediate: true }
   )
