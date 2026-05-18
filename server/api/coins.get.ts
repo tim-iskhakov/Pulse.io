@@ -1,6 +1,7 @@
 import { getQuery } from 'h3'
 import type { CoinMarketRaw } from '#shared/types/coinsMarkets'
 import { coinsMapper } from '../utils/coinsMapper'
+import { normalizeMarketsPagination } from '../utils/normalizeMarketsPagination'
 import { throwUpstreamFetchError } from '../utils/upstreamFetchError'
 
 type CoinsQuery = {
@@ -89,11 +90,13 @@ export default defineEventHandler(async (event) => {
   const parsedPriceChangePercentage = String(q.price_change_percentage || '7d')
   const parsedPrecision = String(q.precision || '2')
 
+  const { per_page, page } = normalizeMarketsPagination(q.per_page, q.page)
+
   const query: CoinsQuery = {
     vs_currency: String(q.vs_currency || 'usd'),
     order: String(q.order || 'market_cap_desc'),
-    per_page: Number(q.per_page || 20),
-    page: q.page ? Number(q.page) : 1,
+    per_page,
+    page,
     sparkline: q.sparkline === 'true' || q.sparkline === true
   }
 
