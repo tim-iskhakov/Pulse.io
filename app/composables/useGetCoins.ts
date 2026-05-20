@@ -18,15 +18,22 @@ export const useGetCoins = async (page: Ref<number>, perPage: number) => {
 
   const { data, status, pending, error, refresh, clear } = asyncData
 
-  if (Array.isArray(data.value)) {
-    coinsStore.setItems(data.value)
-  }
-
+  // Nuxt seeds a new `useFetch` key with the previous key's data while the next
+  // request is in flight, so syncing the store from `data` alone can briefly
+  // show the wrong page after pagination. Clear on pending; apply on success.
   watch(
-    data,
-    (newData) => {
-      if (Array.isArray(newData)) {
-        coinsStore.setItems(newData)
+    [data, status],
+    ([newData, fetchStatus]) => {
+      if (fetchStatus === 'pending') {
+        coinsStore.setItems([])
+        return
+      }
+      if (fetchStatus === 'success') {
+        coinsStore.setItems(Array.isArray(newData) ? newData : [])
+        return
+      }
+      if (fetchStatus === 'error') {
+        coinsStore.setItems([])
       }
     },
     { immediate: true }
