@@ -26,12 +26,8 @@ function getFetchErrorParts(e: unknown): { status?: number; retryAfterSeconds?: 
   }
 }
 
-watch(coinId, () => {
-  chartHistoryBackoffUntil.value = 0
-})
-
 const { data: coin } = await useAsyncData<CoinDetailsResponse | null>(
-  () => `coin:${coinId.value}`,
+  'coin-detail',
   async () => {
     if (!coinId.value) {
       return null
@@ -40,12 +36,13 @@ const { data: coin } = await useAsyncData<CoinDetailsResponse | null>(
     return await $fetch<CoinDetailsResponse>(`/api/coins/${coinId.value}`)
   },
   {
-    watch: [coinId]
+    watch: [coinId],
+    default: () => null
   }
 )
 
 const { data: chart } = await useAsyncData<CoinChartResponse | null>(
-  () => `coin-chart:${coinId.value}`,
+  'coin-chart-7d',
   async () => {
     if (!coinId.value) {
       return null
@@ -59,9 +56,17 @@ const { data: chart } = await useAsyncData<CoinChartResponse | null>(
     })
   },
   {
-    watch: [coinId]
+    watch: [coinId],
+    default: () => null
   }
 )
+
+watch(coinId, () => {
+  chartHistoryBackoffUntil.value = 0
+  coin.value = null
+  chart.value = null
+  chartPoints.value = []
+})
 
 watch(
   chart,

@@ -2,7 +2,7 @@ export const useGetCoins = async (page: Ref<number>, perPage: number) => {
   const coinsStore = useCoinsStore()
 
   const asyncData = await useFetch<CoinMarket[] | null>('/api/coins', {
-    key: computed(() => `coins:${page.value}:${perPage}`),
+    key: 'coins-markets-list',
     immediate: true,
     query: computed(
       () =>
@@ -17,6 +17,14 @@ export const useGetCoins = async (page: Ref<number>, perPage: number) => {
   })
 
   const { data, status, pending, error, refresh, clear } = asyncData
+
+  watch(
+    page,
+    () => {
+      coinsStore.setItems([])
+    },
+    { flush: 'pre' }
+  )
 
   if (Array.isArray(data.value)) {
     coinsStore.setItems(data.value)
