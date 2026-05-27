@@ -28,6 +28,8 @@ function getFetchErrorParts(e: unknown): { status?: number; retryAfterSeconds?: 
 
 watch(coinId, () => {
   chartHistoryBackoffUntil.value = 0
+  // Allow the new coin to load history; stale in-flight range responses bail out via requestCoinId.
+  isLoadingMoreChart.value = false
 })
 
 const { data: coin } = await useAsyncData<CoinDetailsResponse | null>(
@@ -99,7 +101,8 @@ useCoinChart({
   points: chartPoints,
   isPositive,
   async onNeedMoreLeft(oldestLoadedTime) {
-    if (!coinId.value || isLoadingMoreChart.value) return
+    const requestCoinId = coinId.value
+    if (!requestCoinId || isLoadingMoreChart.value) return
     if (Date.now() < chartHistoryBackoffUntil.value) return
     isLoadingMoreChart.value = true
 
@@ -107,13 +110,17 @@ useCoinChart({
       const to = Math.floor(Number(oldestLoadedTime))
       const from = Math.max(to - 70 * 24 * 60 * 60, 0)
 
-      const range = await $fetch<CoinChartResponse>(`/api/coins/${coinId.value}/chart/range`, {
+      const range = await $fetch<CoinChartResponse>(`/api/coins/${requestCoinId}/chart/range`, {
         query: {
           vs_currency: 'usd',
           from,
           to
         }
       })
+
+      if (coinId.value !== requestCoinId) {
+        return
+      }
 
       const nextPoints =
         range.prices?.map(([timestampMs, value]) => ({
