@@ -18,7 +18,7 @@ const props = withDefaults(
 )
 
 const formattedValue = computed(() => {
-  if (!props.value) {
+  if (props.value === null || props.value === undefined) {
     return null
   }
 
@@ -40,7 +40,7 @@ const formattedValue = computed(() => {
 
 <template>
   <span
-    v-if="value"
+    v-if="value !== null && value !== undefined"
     class="tabular-nums"
     :class="{
       'text-positive': color && Number(value.toFixed(2)) > 0,
