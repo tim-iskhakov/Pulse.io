@@ -26,12 +26,8 @@ function getFetchErrorParts(e: unknown): { status?: number; retryAfterSeconds?: 
   }
 }
 
-watch(coinId, () => {
-  chartHistoryBackoffUntil.value = 0
-})
-
 const { data: coin } = await useAsyncData<CoinDetailsResponse | null>(
-  () => `coin:${coinId.value}`,
+  'coin-detail',
   async () => {
     if (!coinId.value) {
       return null
@@ -40,12 +36,13 @@ const { data: coin } = await useAsyncData<CoinDetailsResponse | null>(
     return await $fetch<CoinDetailsResponse>(`/api/coins/${coinId.value}`)
   },
   {
-    watch: [coinId]
+    watch: [coinId],
+    default: () => null
   }
 )
 
 const { data: chart } = await useAsyncData<CoinChartResponse | null>(
-  () => `coin-chart:${coinId.value}`,
+  'coin-chart-7d',
   async () => {
     if (!coinId.value) {
       return null
@@ -59,9 +56,17 @@ const { data: chart } = await useAsyncData<CoinChartResponse | null>(
     })
   },
   {
-    watch: [coinId]
+    watch: [coinId],
+    default: () => null
   }
 )
+
+watch(coinId, () => {
+  chartHistoryBackoffUntil.value = 0
+  coin.value = null
+  chart.value = null
+  chartPoints.value = []
+})
 
 watch(
   chart,
@@ -99,7 +104,8 @@ useCoinChart({
   points: chartPoints,
   isPositive,
   async onNeedMoreLeft(oldestLoadedTime) {
-    if (!coinId.value || isLoadingMoreChart.value) return
+    const requestCoinId = coinId.value
+    if (!requestCoinId || isLoadingMoreChart.value) return
     if (Date.now() < chartHistoryBackoffUntil.value) return
     isLoadingMoreChart.value = true
 
@@ -107,13 +113,17 @@ useCoinChart({
       const to = Math.floor(Number(oldestLoadedTime))
       const from = Math.max(to - 70 * 24 * 60 * 60, 0)
 
-      const range = await $fetch<CoinChartResponse>(`/api/coins/${coinId.value}/chart/range`, {
+      const range = await $fetch<CoinChartResponse>(`/api/coins/${requestCoinId}/chart/range`, {
         query: {
           vs_currency: 'usd',
           from,
           to
         }
       })
+
+      if (coinId.value !== requestCoinId) {
+        return
+      }
 
       const nextPoints =
         range.prices?.map(([timestampMs, value]) => ({
@@ -133,6 +143,9 @@ useCoinChart({
         (a, b) => Number(a.time) - Number(b.time)
       )
     } catch (err) {
+      if (coinId.value !== requestCoinId) {
+        return
+      }
       const { status, retryAfterSeconds } = getFetchErrorParts(err)
       if (status === 429) {
         const pauseSec = retryAfterSeconds ?? 60
