@@ -18,14 +18,15 @@ export const useGetCoins = async (page: Ref<number>, perPage: number) => {
 
   const { data, status, pending, error, refresh, clear } = asyncData
 
-  if (Array.isArray(data.value)) {
-    coinsStore.setItems(data.value)
-  }
+  // Nuxt seeds a new fetch key with the previous key's data while the next request runs.
+  watch(page, () => {
+    coinsStore.setItems([])
+  })
 
   watch(
-    data,
-    (newData) => {
-      if (Array.isArray(newData)) {
+    [data, status],
+    ([newData, s]) => {
+      if (s === 'success' && Array.isArray(newData)) {
         coinsStore.setItems(newData)
       }
     },
