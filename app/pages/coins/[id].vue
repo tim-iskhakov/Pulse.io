@@ -2,6 +2,7 @@
 import type { CoinDetailsResponse } from '#shared/types/coinDetails'
 import type { UTCTimestamp } from 'lightweight-charts'
 import { useCoinChart } from '~/composables/coin/useChart'
+import { isStaleChartHistoryRequest, mergeChartHistoryPoints } from '~/utils/chartHistory'
 
 type CoinChartResponse = {
   prices: [number, number][]
@@ -28,6 +29,7 @@ function getFetchErrorParts(e: unknown): { status?: number; retryAfterSeconds?: 
 
 watch(coinId, () => {
   chartHistoryBackoffUntil.value = 0
+  isLoadingMoreChart.value = false
 })
 
 const { data: coin } = await useAsyncData<CoinDetailsResponse | null>(
@@ -99,7 +101,8 @@ useCoinChart({
   points: chartPoints,
   isPositive,
   async onNeedMoreLeft(oldestLoadedTime) {
-    if (!coinId.value || isLoadingMoreChart.value) return
+    const requestCoinId = coinId.value
+    if (!requestCoinId || isLoadingMoreChart.value) return
     if (Date.now() < chartHistoryBackoffUntil.value) return
     isLoadingMoreChart.value = true
 
@@ -107,13 +110,15 @@ useCoinChart({
       const to = Math.floor(Number(oldestLoadedTime))
       const from = Math.max(to - 70 * 24 * 60 * 60, 0)
 
-      const range = await $fetch<CoinChartResponse>(`/api/coins/${coinId.value}/chart/range`, {
+      const range = await $fetch<CoinChartResponse>(`/api/coins/${requestCoinId}/chart/range`, {
         query: {
           vs_currency: 'usd',
           from,
           to
         }
       })
+
+      if (isStaleChartHistoryRequest(requestCoinId, coinId.value)) return
 
       const nextPoints =
         range.prices?.map(([timestampMs, value]) => ({
@@ -123,15 +128,13 @@ useCoinChart({
 
       if (!nextPoints.length) return
 
-      const merged = [...nextPoints, ...chartPoints.value]
-      const uniqueByTime = new Map<number, { time: UTCTimestamp; value: number }>()
-      for (const point of merged) {
-        uniqueByTime.set(Number(point.time), point)
-      }
-
-      chartPoints.value = Array.from(uniqueByTime.values()).sort(
-        (a, b) => Number(a.time) - Number(b.time)
-      )
+      chartPoints.value = mergeChartHistoryPoints(
+        chartPoints.value.map((point) => ({ time: Number(point.time), value: point.value })),
+        nextPoints.map((point) => ({ time: Number(point.time), value: point.value }))
+      ).map((point) => ({
+        time: point.time as UTCTimestamp,
+        value: point.value
+      }))
     } catch (err) {
       const { status, retryAfterSeconds } = getFetchErrorParts(err)
       if (status === 429) {
