@@ -101,19 +101,24 @@ useCoinChart({
   async onNeedMoreLeft(oldestLoadedTime) {
     if (!coinId.value || isLoadingMoreChart.value) return
     if (Date.now() < chartHistoryBackoffUntil.value) return
+    const chartLoadCoinId = coinId.value
     isLoadingMoreChart.value = true
 
     try {
       const to = Math.floor(Number(oldestLoadedTime))
       const from = Math.max(to - 70 * 24 * 60 * 60, 0)
 
-      const range = await $fetch<CoinChartResponse>(`/api/coins/${coinId.value}/chart/range`, {
+      const range = await $fetch<CoinChartResponse>(`/api/coins/${chartLoadCoinId}/chart/range`, {
         query: {
           vs_currency: 'usd',
           from,
           to
         }
       })
+
+      if (coinId.value !== chartLoadCoinId) {
+        return
+      }
 
       const nextPoints =
         range.prices?.map(([timestampMs, value]) => ({
