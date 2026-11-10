@@ -1,3 +1,5 @@
+import { parseBinanceMiniTickerMessages } from '#shared/utils/parseBinanceMiniTickerMessages'
+
 export const useBinanceWebsocket = () => {
   const { updateItems } = useCoinsStore()
 
@@ -7,8 +9,10 @@ export const useBinanceWebsocket = () => {
       autoReconnect: true,
       immediate: false,
       onMessage(_ws, event) {
-        const formatedData = webSocketMapper(JSON.parse(event.data))
-        updateItems(formatedData)
+        const messages = parseBinanceMiniTickerMessages(event.data)
+        if (!messages.length) return
+
+        updateItems(webSocketMapper(messages))
       }
     }
   )
